@@ -1,0 +1,23 @@
+{
+  "name": "omo-drive",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "bun index.ts",
+    "test": "bun test test/*.test.ts",
+    "test:ui": "npx playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@types/bun": "latest",
+    "@types/qrcode": "^1.5.6"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "hono": "^4.12.3",
+    "qrcode": "^1.5.4"
+  }
+}

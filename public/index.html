@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Voice Remote</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon.png">
+</head>
+<body>
+    <div id="app">
+        <div class="status-bar">
+            <span id="wake-lock-status">Wake Lock: Off</span>
+            <span id="session-info">No Active Session</span>
+        </div>
+
+        <div id="ptt-container">
+            <button id="ptt-button" aria-label="Toggle Recording">
+                <span class="label">TAP TO SPEAK</span>
+                <span class="status" id="ptt-status">Tap to record</span>
+            </button>
+        </div>
+
+        <div class="controls-grid">
+            <button class="control-btn" id="stop-speaking">Stop Speaking</button>
+            <button class="control-btn" id="repeat-last">Repeat Last</button>
+            <button class="control-btn" id="screenshot">Screenshot</button>
+            <button class="control-btn" id="sessions">Sessions</button>
+            <button class="control-btn" id="models">Models</button>
+            <button class="control-btn" id="debug-toggle">Debug Input</button>
+        </div>
+
+        <div id="debug-section">
+            <input type="text" id="debug-input" placeholder="Type command..." aria-label="Debug input">
+        </div>
+
+        <div id="error-toast" class="toast"></div>
+
+        <div id="permission-overlay" class="overlay">
+            <div class="overlay-content">
+                <h2>Permission Requested</h2>
+                <p id="permission-summary"></p>
+                <div class="overlay-buttons">
+                    <button id="permission-approve" class="approve-btn">Approve</button>
+                    <button id="permission-deny" class="deny-btn">Deny</button>
+                </div>
+                <div id="permission-voice-status" class="voice-status">Listening for "approve" or "deny"...</div>
+            </div>
+        </div>
+    </div>
+    <script src="app.js" type="module"></script>
+</body>
+</html>
