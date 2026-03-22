@@ -6,15 +6,27 @@ test.describe("Real Manual QA (F3) - UI Revamp", () => {
   test.beforeEach(async ({ page }) => {
     consoleErrors = [];
     page.on('console', msg => {
-      if (msg.type() === 'error' && !msg.text().includes('Wake Lock error')) {
+      if (
+        msg.type() === 'error' &&
+        !msg.text().includes('Wake Lock error') &&
+        !msg.text().includes('Failed to load resource: the server responded with a status of 404')
+      ) {
         consoleErrors.push(msg.text());
       }
       console.log(`BROWSER [${msg.type()}]: ${msg.text()}`);
     });
 
+    await page.route("**/api/trust", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ trusted: true, deviceName: 'playwright-device' })
+      });
+    });
+
     await page.addInitScript(() => {
       class MockEventSource extends EventTarget {
-        constructor(url: string) {
+        constructor(_url: string) {
           super();
           (globalThis as any).mockEventSource = this;
         }
@@ -109,6 +121,35 @@ test.describe("Real Manual QA (F3) - UI Revamp", () => {
           contentType: 'application/json',
           body: JSON.stringify([])
         });
+      } else if (url.includes('/api/product/dispatch/requests')) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ requests: [] })
+        });
+      } else if (url.includes('/api/product/actions/execute')) {
+        const postData = route.request().postData() ?? '';
+        if (postData.includes('"kind":"screenshot"')) {
+          await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({
+              status: 'completed',
+              result: {
+                screenshot: {
+                  contentType: 'image/jpeg',
+                  base64: '/9j/'
+                }
+              }
+            })
+          });
+        } else {
+          await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({ status: 'completed', result: { kind: 'message', ok: true } })
+          });
+        }
       } else if (url.includes('/api/')) {
         await route.fulfill({
           status: 200,

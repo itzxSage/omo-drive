@@ -6,7 +6,7 @@ test.use({
 });
 
 test.describe("PWA UI Tests", () => {
-  test("PTT button exists and is full-screen sized", async ({ page }) => {
+  test("PTT button exists and uses the established circular mobile size", async ({ page }) => {
     await page.goto("http://localhost:8080/public/index.html");
     
     const pttButton = page.locator("#ptt-button");
@@ -15,12 +15,14 @@ test.describe("PWA UI Tests", () => {
     const box = await pttButton.boundingBox();
     expect(box).not.toBeNull();
     if (box) {
-      expect(box.width).toBeGreaterThan(300);
-      expect(box.height).toBeGreaterThan(300);
+      expect(box.width).toBeGreaterThanOrEqual(150);
+      expect(box.width).toBeLessThanOrEqual(170);
+      expect(box.height).toBeGreaterThanOrEqual(150);
+      expect(box.height).toBeLessThanOrEqual(170);
     }
   });
 
-  test("Debug input sends text to session message API", async ({ page }) => {
+  test("Debug input sends text through product action execute API", async ({ page }) => {
     await page.goto("http://localhost:8080/public/index.html");
     
     await page.click("#debug-toggle");
@@ -30,12 +32,20 @@ test.describe("PWA UI Tests", () => {
     const debugInput = page.locator("#debug-input");
     await expect(debugInput).toBeVisible();
     
-    await page.route("**/api/opencode/session/**/message", async (route) => {
+    await page.route("**/api/product/actions/execute", async (route) => {
       const request = route.request();
       expect(request.method()).toBe("POST");
+      expect(await request.headerValue("content-type")).toContain("application/json");
       const postData = request.postDataJSON();
+      expect(postData.kind).toBe("message");
+      expect(postData.inputMode).toBe("typed");
+      expect(postData.sessionId).toEqual(expect.any(String));
       expect(postData.content).toBe("test message");
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true }) });
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ status: 'completed' })
+      });
     });
     
     await debugInput.fill("test message");

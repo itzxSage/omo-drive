@@ -1,13 +1,32 @@
-import { test, expect, describe } from "bun:test";
+import { beforeEach, describe, expect, test } from "bun:test";
 import { app } from "../index";
+import { trustStore } from "../trust";
+
+function createTrustedHeaders() {
+  const bootstrap = trustStore.issueBootstrapToken();
+  const session = trustStore.redeemBootstrapToken(bootstrap.token, "stt-test-device");
+
+  if (!session) {
+    throw new Error("Failed to create trusted session for test");
+  }
+
+  return {
+    Authorization: `Bearer ${session.sessionToken}`,
+  };
+}
 
 describe("STT API", () => {
+  beforeEach(() => {
+    trustStore.reset();
+  });
+
   test("transcribes hello.wav correctly", async () => {
     const file = Bun.file("test/fixtures/hello.wav");
     const formData = new FormData();
     formData.append("audio", file);
 
     const res = await app.request("/api/stt", {
+      headers: createTrustedHeaders(),
       method: "POST",
       body: formData,
     });
@@ -24,6 +43,7 @@ describe("STT API", () => {
     formData.append("audio", new Blob([largeBuffer]));
 
     const res = await app.request("/api/stt", {
+      headers: createTrustedHeaders(),
       method: "POST",
       body: formData,
     });
@@ -36,6 +56,7 @@ describe("STT API", () => {
     formData.append("not_audio", "random data");
 
     const res = await app.request("/api/stt", {
+      headers: createTrustedHeaders(),
       method: "POST",
       body: formData,
     });

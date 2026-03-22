@@ -1,5 +1,12 @@
 import qrcode from 'qrcode';
 import { $ } from 'bun';
+import { getRuntimeConfig } from './config';
+
+export function buildPairingURL(baseUrl: string, bootstrapToken: string): string {
+  const url = new URL(baseUrl);
+  url.searchParams.set('bootstrapToken', bootstrapToken);
+  return url.toString();
+}
 
 export async function getQRTerminal(url: string): Promise<string> {
   return await qrcode.toString(url, { type: 'terminal', small: true });
@@ -11,7 +18,7 @@ export async function getQRImage(url: string): Promise<Buffer> {
 
 export async function getTailnetURL(): Promise<string> {
   try {
-    const tailscalePath = '/Applications/Tailscale.app/Contents/MacOS/Tailscale';
+    const tailscalePath = getRuntimeConfig().pair.tailscaleBin;
     const output = await $`${tailscalePath} status --json`.text();
     const status = JSON.parse(output);
     let dnsName = status.Self.DNSName;

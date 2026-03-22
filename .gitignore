@@ -49,3 +49,6 @@ test-results/
 # Playwright
 playwright-report/
 
+# Product-layer SQLite store (test and runtime artifacts)
+.omo-drive/
+
