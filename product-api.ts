@@ -200,6 +200,14 @@ const HANDOFF_TRANSITIONS: Record<ProductHandoffStatus, ProductHandoffStatus[]> 
   accepted: [],
 };
 
+function getRequiredParam(c: Context, name: string): string | Response {
+  const value = c.req.param(name);
+  if (!value) {
+    return c.json({ error: `Missing route param: ${name}` }, 400);
+  }
+  return value;
+}
+
 export function createProductApi({ productStore }: CreateProductApiOptions): Hono {
   const app = new Hono();
 
@@ -428,7 +436,11 @@ export function createProductApi({ productStore }: CreateProductApiOptions): Hon
 
   app.post("/actions/:requestId/respond", requireTrusted, async (c) => {
     const session = getTrustedContext(c).get("trustedSession");
-    const request = productStore.getDispatchRequest(c.req.param("requestId"));
+    const requestId = getRequiredParam(c, "requestId");
+    if (requestId instanceof Response) {
+      return requestId;
+    }
+    const request = productStore.getDispatchRequest(requestId);
 
     if (!request) {
       return c.json({ error: "Dispatch request not found" }, 404);
@@ -712,7 +724,11 @@ export function createProductApi({ productStore }: CreateProductApiOptions): Hon
   });
 
   app.get("/dispatch/requests/:requestId", requireTrusted, (c) => {
-    const request = productStore.getDispatchRequest(c.req.param("requestId"));
+    const requestId = getRequiredParam(c, "requestId");
+    if (requestId instanceof Response) {
+      return requestId;
+    }
+    const request = productStore.getDispatchRequest(requestId);
     if (!request) {
       return c.json({ error: "Dispatch request not found" }, 404);
     }
@@ -721,7 +737,11 @@ export function createProductApi({ productStore }: CreateProductApiOptions): Hon
 
   app.post("/dispatch/requests/:requestId/status", requireTrusted, async (c) => {
     const session = getTrustedContext(c).get("trustedSession");
-    const request = productStore.getDispatchRequest(c.req.param("requestId"));
+    const requestId = getRequiredParam(c, "requestId");
+    if (requestId instanceof Response) {
+      return requestId;
+    }
+    const request = productStore.getDispatchRequest(requestId);
     if (!request) {
       return c.json({ error: "Dispatch request not found" }, 404);
     }
@@ -759,7 +779,11 @@ export function createProductApi({ productStore }: CreateProductApiOptions): Hon
 
   app.post("/dispatch/requests/:requestId/execute", requireTrusted, async (c) => {
     const session = getTrustedContext(c).get("trustedSession");
-    const request = productStore.getDispatchRequest(c.req.param("requestId"));
+    const requestId = getRequiredParam(c, "requestId");
+    if (requestId instanceof Response) {
+      return requestId;
+    }
+    const request = productStore.getDispatchRequest(requestId);
     if (!request) {
       return c.json({ error: "Dispatch request not found" }, 404);
     }
@@ -995,7 +1019,11 @@ export function createProductApi({ productStore }: CreateProductApiOptions): Hon
   });
 
   app.get("/dispatch/runs/:runId", requireTrusted, (c) => {
-    const run = productStore.getDispatchRun(c.req.param("runId"));
+    const runId = getRequiredParam(c, "runId");
+    if (runId instanceof Response) {
+      return runId;
+    }
+    const run = productStore.getDispatchRun(runId);
     if (!run) {
       return c.json({ error: "Dispatch run not found" }, 404);
     }
@@ -1004,7 +1032,11 @@ export function createProductApi({ productStore }: CreateProductApiOptions): Hon
 
   app.post("/dispatch/runs/:runId/status", requireTrusted, async (c) => {
     const session = getTrustedContext(c).get("trustedSession");
-    const run = productStore.getDispatchRun(c.req.param("runId"));
+    const runId = getRequiredParam(c, "runId");
+    if (runId instanceof Response) {
+      return runId;
+    }
+    const run = productStore.getDispatchRun(runId);
     if (!run) {
       return c.json({ error: "Dispatch run not found" }, 404);
     }
@@ -1106,7 +1138,11 @@ export function createProductApi({ productStore }: CreateProductApiOptions): Hon
   });
 
   app.get("/review/items/:reviewItemId", requireTrusted, (c) => {
-    const reviewItem = productStore.getReviewItem(c.req.param("reviewItemId"));
+    const reviewItemId = getRequiredParam(c, "reviewItemId");
+    if (reviewItemId instanceof Response) {
+      return reviewItemId;
+    }
+    const reviewItem = productStore.getReviewItem(reviewItemId);
     if (!reviewItem) {
       return c.json({ error: "Review item not found" }, 404);
     }
@@ -1114,7 +1150,11 @@ export function createProductApi({ productStore }: CreateProductApiOptions): Hon
   });
 
   app.get("/review/items/:reviewItemId/detail", requireTrusted, (c) => {
-    const reviewItem = productStore.getReviewItem(c.req.param("reviewItemId"));
+    const reviewItemId = getRequiredParam(c, "reviewItemId");
+    if (reviewItemId instanceof Response) {
+      return reviewItemId;
+    }
+    const reviewItem = productStore.getReviewItem(reviewItemId);
     if (!reviewItem) {
       return c.json({ error: "Review item not found" }, 404);
     }
@@ -1126,7 +1166,11 @@ export function createProductApi({ productStore }: CreateProductApiOptions): Hon
 
   app.post("/review/items/:reviewItemId/status", requireTrusted, async (c) => {
     const session = getTrustedContext(c).get("trustedSession");
-    const reviewItem = productStore.getReviewItem(c.req.param("reviewItemId"));
+    const reviewItemId = getRequiredParam(c, "reviewItemId");
+    if (reviewItemId instanceof Response) {
+      return reviewItemId;
+    }
+    const reviewItem = productStore.getReviewItem(reviewItemId);
     if (!reviewItem) {
       return c.json({ error: "Review item not found" }, 404);
     }
@@ -1164,7 +1208,11 @@ export function createProductApi({ productStore }: CreateProductApiOptions): Hon
 
   app.post("/review/items/:reviewItemId/actions", requireTrusted, async (c) => {
     const session = getTrustedContext(c).get("trustedSession");
-    const reviewItem = productStore.getReviewItem(c.req.param("reviewItemId"));
+    const reviewItemId = getRequiredParam(c, "reviewItemId");
+    if (reviewItemId instanceof Response) {
+      return reviewItemId;
+    }
+    const reviewItem = productStore.getReviewItem(reviewItemId);
     if (!reviewItem) {
       return c.json({ error: "Review item not found" }, 404);
     }
@@ -1303,7 +1351,11 @@ export function createProductApi({ productStore }: CreateProductApiOptions): Hon
   });
 
   app.get("/decisions/:decisionId", requireTrusted, (c) => {
-    const decision = productStore.getDecision(c.req.param("decisionId"));
+    const decisionId = getRequiredParam(c, "decisionId");
+    if (decisionId instanceof Response) {
+      return decisionId;
+    }
+    const decision = productStore.getDecision(decisionId);
     if (!decision) {
       return c.json({ error: "Decision not found" }, 404);
     }
@@ -1346,7 +1398,11 @@ export function createProductApi({ productStore }: CreateProductApiOptions): Hon
   });
 
   app.get("/handoffs/:handoffId", requireTrusted, (c) => {
-    const handoff = productStore.getHandoff(c.req.param("handoffId"));
+    const handoffId = getRequiredParam(c, "handoffId");
+    if (handoffId instanceof Response) {
+      return handoffId;
+    }
+    const handoff = productStore.getHandoff(handoffId);
     if (!handoff) {
       return c.json({ error: "Handoff not found" }, 404);
     }
@@ -1355,7 +1411,11 @@ export function createProductApi({ productStore }: CreateProductApiOptions): Hon
 
   app.post("/handoffs/:handoffId/status", requireTrusted, async (c) => {
     const session = getTrustedContext(c).get("trustedSession");
-    const handoff = productStore.getHandoff(c.req.param("handoffId"));
+    const handoffId = getRequiredParam(c, "handoffId");
+    if (handoffId instanceof Response) {
+      return handoffId;
+    }
+    const handoff = productStore.getHandoff(handoffId);
     if (!handoff) {
       return c.json({ error: "Handoff not found" }, 404);
     }

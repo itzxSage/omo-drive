@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { createProductStore, type AuditEventRecord } from "../product-store";
-import { trustStore } from "../trust";
+import { setTrustAuditReporter, trustStore } from "../trust";
 
 process.env.OPENCODE_SERVER_USERNAME = "opencode";
 process.env.OPENCODE_SERVER_PASSWORD = "very-long-random-password-for-omo-drive";
@@ -91,6 +91,7 @@ afterAll(() => {
   listener?.stop(true);
   mockServer?.stop(true);
   trustStore.reset();
+  setTrustAuditReporter(null);
   store.close();
   rmSync(tempDir, { recursive: true, force: true });
 });
