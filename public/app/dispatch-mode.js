@@ -1,3 +1,7 @@
+import { getModeTrustGuidance, normalizeTrustStatus } from './trust-boot.js';
+
+const TRUSTED_EMPTY_COPY = 'No dispatch requests yet.';
+
 function buildDispatchPayload(elements) {
   const inputSummary = elements.dispatchSummary.value.trim();
   const targetScope = elements.dispatchScope.value;
@@ -71,6 +75,8 @@ async function parseResponse(response) {
 }
 
 export function createDispatchMode(elements, state, speechOutput) {
+  let trustStatus = normalizeTrustStatus({ trusted: false });
+
   function setStatus(text) {
     elements.dispatchStatus.textContent = text;
   }
@@ -80,14 +86,23 @@ export function createDispatchMode(elements, state, speechOutput) {
     elements.dispatchRefresh.disabled = isBusy;
   }
 
+  function setBlockedControls() {
+    elements.dispatchSubmit.disabled = true;
+    elements.dispatchRefresh.disabled = false;
+  }
+
+  function renderPlaceholder(copy, className = 'dispatch-empty') {
+    const placeholder = document.createElement('p');
+    placeholder.className = className;
+    placeholder.textContent = copy;
+    elements.dispatchList.replaceChildren(placeholder);
+  }
+
   function renderRequests(requests) {
     elements.dispatchList.replaceChildren();
 
     if (!requests.length) {
-      const empty = document.createElement('p');
-      empty.className = 'dispatch-empty';
-      empty.textContent = 'No dispatch requests yet.';
-      elements.dispatchList.append(empty);
+      renderPlaceholder(TRUSTED_EMPTY_COPY);
       return;
     }
 
@@ -96,6 +111,19 @@ export function createDispatchMode(elements, state, speechOutput) {
       fragment.append(createRequestCard(request));
     });
     elements.dispatchList.append(fragment);
+  }
+
+  function applyTrustState(nextTrustStatus) {
+    trustStatus = normalizeTrustStatus(nextTrustStatus);
+
+    if (trustStatus.trusted) {
+      return;
+    }
+
+    const guidance = getModeTrustGuidance('dispatch', trustStatus);
+    setBlockedControls();
+    setStatus(guidance.status);
+    renderPlaceholder(guidance.status, 'dispatch-empty dispatch-empty-blocked');
   }
 
   async function refreshRequests() {
@@ -151,18 +179,22 @@ export function createDispatchMode(elements, state, speechOutput) {
       setStatus('Dispatch failed.');
       state.showError(`Dispatch failed: ${err.message}`);
     } finally {
-      setBusy(false);
+      if (trustStatus.trusted) {
+        setBusy(false);
+      } else {
+        setBlockedControls();
+      }
     }
   }
 
   async function initialize(trustStatus) {
-    renderRequests([]);
+    applyTrustState(trustStatus);
 
-    if (!trustStatus?.trusted) {
-      setStatus('Dispatch is available after pairing.');
+    if (!normalizeTrustStatus(trustStatus).trusted) {
       return;
     }
 
+    renderPlaceholder(TRUSTED_EMPTY_COPY);
     setStatus('Loading saved dispatch requests...');
     setBusy(true);
 
@@ -172,11 +204,16 @@ export function createDispatchMode(elements, state, speechOutput) {
     } catch (err) {
       setStatus('Dispatch history unavailable.');
     } finally {
-      setBusy(false);
+      if (trustStatus.trusted) {
+        setBusy(false);
+      } else {
+        setBlockedControls();
+      }
     }
   }
 
   return {
+    applyTrustState,
     initialize,
     refreshRequests,
     submitDispatch,
