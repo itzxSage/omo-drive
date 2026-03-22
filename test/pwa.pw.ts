@@ -23,15 +23,16 @@ test.describe("PWA UI Tests", () => {
   });
 
   test("Debug input sends text through product action execute API", async ({ page }) => {
-    await page.goto("http://localhost:8080/public/index.html");
-    
-    await page.click("#debug-toggle");
-    const debugSection = page.locator("#debug-section");
-    await expect(debugSection).toHaveClass(/visible/);
-    
-    const debugInput = page.locator("#debug-input");
-    await expect(debugInput).toBeVisible();
-    
+    // Stub /api/trust as trusted so the shell enables protected controls like #debug-toggle
+    await page.route("**/api/trust", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ trusted: true, state: 'trusted', deviceName: 'test-device' })
+      });
+    });
+
+    // Stub the product action execute API before interaction
     await page.route("**/api/product/actions/execute", async (route) => {
       const request = route.request();
       expect(request.method()).toBe("POST");
@@ -47,7 +48,16 @@ test.describe("PWA UI Tests", () => {
         body: JSON.stringify({ status: 'completed' })
       });
     });
-    
+
+    await page.goto("http://localhost:8080/public/index.html");
+
+    await page.click("#debug-toggle");
+    const debugSection = page.locator("#debug-section");
+    await expect(debugSection).toHaveClass(/visible/);
+
+    const debugInput = page.locator("#debug-input");
+    await expect(debugInput).toBeVisible();
+
     await debugInput.fill("test message");
     await debugInput.press("Enter");
   });
