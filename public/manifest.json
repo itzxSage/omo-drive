@@ -1,7 +1,7 @@
 {
-  "name": "OMO Drive Voice Remote",
+  "name": "OMO Drive",
   "short_name": "OMO Drive",
-  "description": "Voice remote for OMO Drive with push-to-talk.",
+  "description": "The trusted mobile bridge for OpenCode. Live, Dispatch, and Review from anywhere.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#000000",

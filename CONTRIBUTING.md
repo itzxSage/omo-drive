@@ -63,19 +63,37 @@ bunx playwright test
 
 ## Project Structure
 
-```
+```text
 omo-drive/
-├── public/           # Frontend UI
-│   ├── app.js        # Main application logic
-│   ├── index.html    # Entry HTML
-│   └── styles.css    # UI styles
-├── test/             # Test files
-├── index.ts          # Server entry point
-├── pair.ts           # QR pairing scaffold (experimental)
-└── CLAUDE.md         # Project conventions
+├── config.ts               # Centralized runtime configuration
+├── trust.ts                # Trust store and session lifecycle
+├── product-store.ts        # SQLite persistence (dispatch, review, decisions)
+├── product-api.ts          # Typed product API
+├── server/
+│   ├── app.ts              # App factory
+│   ├── pairing.ts          # QR pairing helper
+│   └── routes/             # Modular route handlers
+├── public/
+│   ├── index.html          # Shell entry (Live / Dispatch / Review)
+│   ├── styles.css          # UI styles
+│   ├── app.js              # Shell bootstrap
+│   └── app/                # Modular frontend modules
+├── test/                   # Bun unit tests (.test.ts) and Playwright specs (.pw.ts)
+├── docs/
+│   └── operator-policy.md  # Operator policy reference
+└── index.ts                # Server entry point
+```
+
+## Running Playwright Specs
+
+The default `bunx playwright test` only runs `*.spec.ts` files. To run the full `.pw.ts` browser suite:
+
+```bash
+bunx playwright test --config=playwright.pw.config.ts
 ```
 
 ## Notes
 
-- **Voice requirements**: Microphone access requires HTTPS. Use Tailscale Serve (see README) for local HTTPS.
-- **Large files**: The `models/` directory contains ML model weights and is excluded from version control.
+- **HTTPS for Live mode**: Microphone access requires HTTPS. Use Tailscale Serve (see README).
+- **Model weights**: The `models/` directory contains Whisper model weights and is excluded from version control.
+- **Trust required**: Protected routes (`/api/stt`, `/api/opencode/*`, `/api/screenshot`, `/api/product/*`) require a paired, trusted device. Pair via the QR code shown at server startup.
