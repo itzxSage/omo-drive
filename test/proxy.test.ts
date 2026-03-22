@@ -1,10 +1,29 @@
-import { test, expect, beforeAll, afterAll } from "bun:test";
+import { afterAll, beforeAll, beforeEach, expect, test } from "bun:test";
 
 process.env.OPENCODE_SERVER_ORIGIN = "http://127.0.0.1:4196";
+process.env.OPENCODE_SERVER_PASSWORD = "very-long-random-password-for-omo-drive";
 
 import { app } from "../index";
+import { trustStore } from "../trust";
 
 let mockServer: any;
+
+function createTrustedRequest(path: string, init?: RequestInit) {
+  const bootstrap = trustStore.issueBootstrapToken();
+  const session = trustStore.redeemBootstrapToken(bootstrap.token, "proxy-test-device");
+
+  if (!session) {
+    throw new Error("Failed to create trusted session for test");
+  }
+
+  const headers = new Headers(init?.headers);
+  headers.set("Authorization", `Bearer ${session.sessionToken}`);
+
+  return new Request(`http://localhost:8080${path}`, {
+    ...init,
+    headers,
+  });
+}
 
 beforeAll(() => {
   mockServer = Bun.serve({
@@ -34,12 +53,16 @@ beforeAll(() => {
   });
 });
 
+beforeEach(() => {
+  trustStore.reset();
+});
+
 afterAll(() => {
   mockServer.stop();
 });
 
 test("GET /api/opencode/global/health returns 200", async () => {
-  const req = new Request("http://localhost:8080/api/opencode/global/health");
+  const req = createTrustedRequest("/api/opencode/global/health");
   const res = await app.fetch(req);
   expect(res.status).toBe(200);
   const text = await res.text();
@@ -47,7 +70,7 @@ test("GET /api/opencode/global/health returns 200", async () => {
 });
 
 test("GET /api/opencode/session returns 200", async () => {
-  const req = new Request("http://localhost:8080/api/opencode/session");
+  const req = createTrustedRequest("/api/opencode/session");
   const res = await app.fetch(req);
   expect(res.status).toBe(200);
   const text = await res.text();
@@ -55,7 +78,7 @@ test("GET /api/opencode/session returns 200", async () => {
 });
 
 test("GET /api/opencode/session/test-id returns 200", async () => {
-  const req = new Request("http://localhost:8080/api/opencode/session/test-id");
+  const req = createTrustedRequest("/api/opencode/session/test-id");
   const res = await app.fetch(req);
   expect(res.status).toBe(200);
   const text = await res.text();
@@ -63,7 +86,7 @@ test("GET /api/opencode/session/test-id returns 200", async () => {
 });
 
 test("GET /api/opencode/session/does-not-exist/shell returns 403", async () => {
-  const req = new Request("http://localhost:8080/api/opencode/session/does-not-exist/shell");
+  const req = createTrustedRequest("/api/opencode/session/does-not-exist/shell");
   const res = await app.fetch(req);
   expect(res.status).toBe(403);
   const text = await res.text();
@@ -71,7 +94,7 @@ test("GET /api/opencode/session/does-not-exist/shell returns 403", async () => {
 });
 
 test("POST /api/opencode/unsupported-endpoint returns 403", async () => {
-  const req = new Request("http://localhost:8080/api/opencode/unsupported-endpoint", { method: 'POST' });
+  const req = createTrustedRequest("/api/opencode/unsupported-endpoint", { method: "POST" });
   const res = await app.fetch(req);
   expect(res.status).toBe(403);
 });
